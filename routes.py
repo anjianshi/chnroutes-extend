@@ -5,7 +5,8 @@ VPN routes 管理脚本（仅支持 Windows）
 
 routes 分两种：
   chnroutes       包含所有中国 IP，存放于 chnroutes.txt，格式：IP mask
-  custom_routes   是一些不想走 VPN 的外国 IP，存放于 custom_routes.txt，格式：IP domain/ip
+  custom_routes   是一些不想走 VPN 的外国 IP，
+                  存放于 custom_routes.txt，格式：IP domain/ip
 
 
 参数：
@@ -14,7 +15,8 @@ down    停用 routes（相当于 vpndown.dat）
 ---
 gen     重新生成 chnroutes
 ---
-add domain/ip       添加一条 custom_routes，并立即将它启用。若原来已经添加过此 domain，将原来的记录删除，再添加新的
+add domain/ip       添加一条 custom_routes，并立即将它启用。
+                    若原来已经添加过此 domain，将原来的记录删除，再添加新的
 del domain/ip       删除某条 custom_routes，并立即将它禁用
 """
 
@@ -153,11 +155,18 @@ def run_cmd(cmd_list):
   print 'complate'
 
 
+def print_doc():
+  print __doc__.decode('utf-8').encode('gbk')
+
+
 # cli
 if __name__ == '__main__':
   arg_len = len(sys.argv) - 1
 
-  if sys.argv[1] == 'up':
+  if arg_len == 0:
+    print_doc()
+
+  elif sys.argv[1] == 'up':
     up()
 
   elif sys.argv[1] == 'down':
@@ -173,4 +182,4 @@ if __name__ == '__main__':
       exit()
 
   else:
-    print __doc__.decode('utf-8').encode('gbk')
+    print_doc()
