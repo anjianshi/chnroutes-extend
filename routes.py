@@ -172,6 +172,5 @@ if __name__ == '__main__':
       print u'指定的域名找不到对应的 IP 地址'.encode('gbk')
       exit()
 
-
   else:
     print __doc__.decode('utf-8').encode('gbk')
