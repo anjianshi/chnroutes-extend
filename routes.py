@@ -100,8 +100,8 @@ def fetch_ip_data():
 
 def get_all_routes():
   """return ip, mask, metric"""
-  routes = _get_chnroutes()
-  routes.extend(_get_custom_routes())
+  routes = get_chnroutes()
+  routes.extend(get_custom_routes())
   return routes
 
 
