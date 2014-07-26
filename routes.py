@@ -6,7 +6,7 @@ VPN routes 管理脚本（仅支持 Windows）
 routes 分两种：
   chnroutes       包含所有中国 IP，存放于 chnroutes.txt，格式：IP mask
   custom_routes   是一些不想走 VPN 的外国 IP，
-                  存放于 custom_routes.txt，格式：IP domain/ip
+                  存放于 custom_routes.txt，格式：每行一个 domain 或 ip
 
 
 参数：

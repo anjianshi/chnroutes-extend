@@ -5,7 +5,7 @@ P.S. 改编自 chnroutes 项目，目前仅支持 Windows
 routes 分两种：
   chnroutes       包含所有中国 IP，存放于 chnroutes.txt，格式：IP mask
   custom_routes   是一些不想走 VPN 的外国 IP，
-                  存放于 custom_routes.txt，格式：IP domain/ip
+                  存放于 custom_routes.txt，格式：每行一个 domain 或 ip
 
 
 参数：
@@ -15,5 +15,4 @@ down    停用 routes（相当于 vpndown.dat）
 gen     重新生成 chnroutes
 ---
 add domain/ip       添加一条 custom_routes，并立即启用它。
-                    若原来已经添加过此 domain，则将原来的记录删除，重新添加新的
 del domain/ip       删除某条 custom_routes，并立即将它禁用
