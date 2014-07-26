@@ -15,8 +15,7 @@ down    停用 routes（相当于 vpndown.dat）
 ---
 gen     重新生成 chnroutes
 ---
-add domain/ip       添加一条 custom_routes，并立即将它启用。
-                    若原来已经添加过此 domain，将原来的记录删除，再添加新的
+add domain/ip       添加一条 custom_routes，并立即将它启用
 del domain/ip       删除某条 custom_routes，并立即将它禁用
 """
 
@@ -29,8 +28,8 @@ import socket
 import subprocess
 
 
-def up():
-  routes = get_all_routes()
+def up(only_custom=False):
+  routes = get_all_routes() if not only_custom else get_custom_routes()
   cmd_list = [
     'for /F "tokens=3" %%* in (\'route print ^| findstr "\\<0.0.0.0\\>"\') do set "gw=%%*"',
     'ipconfig /flushdns'
@@ -40,8 +39,9 @@ def up():
   run_cmd(cmd_list)
 
 
-def down():
-  run_cmd(['route delete ' + route[0] for route in get_all_routes()])
+def down(only_custom=False):
+  routes = get_all_routes() if not only_custom else get_custom_routes()
+  run_cmd(['route delete ' + route[0] for route in routes])
 
 
 def gen():
@@ -97,24 +97,12 @@ def fetch_ip_data():
          
     return results
 
-def get_ip(domain_or_ip):
-  if re.match('^\d+\.\d+\.\d+\.\d+$'):
-    return domain_or_ip
-  else:
-    try:
-      return socket.getaddrinfo(domain_or_ip,'http')[0][4][0]
-    except socket.gaierror:
-      return False
 
-
-def get_custom_routes():
-  """取出 custom_routes 列表
-  return ip, mask, metric"""
-  if not os.path.isfile("custom_routes.txt"):
-    return []
-  else:
-    with open('custom_routes.txt') as f:
-      return [[route.replace("\r", "").replace("\n", "").split(" ")[0], '255.255.255.255', '25'] for route in f]
+def get_all_routes():
+  """return ip, mask, metric"""
+  routes = _get_chnroutes()
+  routes.extend(_get_custom_routes())
+  return routes
 
 
 def get_chnroutes():
@@ -131,11 +119,32 @@ def get_chnroutes():
       return routes
 
 
-def get_all_routes():
-  """return ip, mask, metric"""
-  routes = get_chnroutes()
-  routes.extend(get_custom_routes())
-  return routes
+def get_custom_routes():
+  """生成 custom_routes 列表
+  return ip, mask, metric"""
+  return [[get_ip(source), '255.255.255.255', '25'] for source in read_custom_routes_txt()]
+
+
+def read_custom_routes_txt():
+  """读取 custom_routes.txt，返回 source 列表
+  （source 既可能是 domain 也可能是 ip）"""
+  if not os.path.isfile("custom_routes.txt"):
+    return []
+  else:
+    with open('custom_routes.txt') as f:
+      # strip() 方法既能清除换行符，又能清除字符串两侧的空格和制表符
+      return [source.strip(' \t\n\r') for source in f]
+
+
+def get_ip(domain_or_ip):
+  if re.match('^\d+\.\d+\.\d+\.\d+$', domain_or_ip):
+    return domain_or_ip
+  else:
+    try:
+      return socket.getaddrinfo(domain_or_ip,'http')[0][4][0]
+    except socket.gaierror:
+      print (u'notice: 找不到指定的域名(' + unicode(domain_or_ip) + u')对应的 IP 地址').encode('gbk')
+      return False
 
 
 _FNULL = open(os.devnull, 'w')
@@ -176,10 +185,34 @@ if __name__ == '__main__':
     gen()
 
   elif sys.argv[1] == 'add' and len(sys.argv) == 3:
-    ip = get_ip(sys.argv[2])
-    if ip is False:
-      print u'指定的域名找不到对应的 IP 地址'.encode('gbk')
-      exit()
+    new_source = sys.argv[2].strip(" \t\r\n")
+    
+    # 检查能否获取到域名对应的 ip (即使获取不到也不会终止操作)
+    get_ip(new_source)
+
+    sources = read_custom_routes_txt()
+
+    if new_source not in sources:
+      sources.append(new_source)
+
+      with open('custom_routes.txt', 'w') as f:
+        f.write("\n".join(sources))
+
+      down(only_custom=True)
+      up(only_custom=True)
+
+  elif sys.argv[1] == 'del' and len(sys.argv) == 3:
+    target_source = sys.argv[2].strip(" \t\r\n")
+    sources = read_custom_routes_txt()
+    if target_source in sources:
+      sources.remove(target_source)
+
+      with open('custom_routes.txt', 'w') as f:
+        f.write("\n".join(sources))
+
+      down(only_custom=True)
+    else:
+      print (u'custom routes 里没有此对象(' + unicode(target_source) + u')').encode('gbk')
 
   else:
     print_doc()
